@@ -76,9 +76,9 @@ void dump (FILE *f, char *buf, int len)
       for (j = 0; j < BYTES_PER_LINE; j++)
 	if ((i + j) < len)
 	  {
-	    char c = buf [i+j] & 0x7f;
-	    if ((buf [i+j] >= ' ') && (buf [i+j] <= '~'))
-	      fprintf (f, "%c", buf [i+j]);
+	    char c = buf [i+j];
+	    if ((c >= ' ') && (c <= '~'))
+	      fprintf (f, "%c", c);
 	    else
 	      fprintf (f, ".");
 	  }
