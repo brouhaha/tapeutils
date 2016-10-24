@@ -1,0 +1,7 @@
+*~
+*.o
+*.d
+tapecopy
+tapedump
+read20
+t10backup
