@@ -98,7 +98,7 @@ int main (int argc, char *argv[])
   if (! srcfn)
     fatal (1, NULL);
 
-  buf = (char *) malloc (MAX_REC_LEN);
+  buf = malloc (MAX_REC_LEN);
   if (! buf)
     fatal (2, "can't allocate buffer\n");
 

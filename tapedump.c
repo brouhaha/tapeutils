@@ -326,7 +326,7 @@ int main (int argc, char *argv[])
       len = getrec (src, buf, MAX_REC_LEN);
       if (len == 0)
 	{
-	  printf ("total length of file %d = %d records, %d bytes\n",
+	  printf ("total length of file %d = %d records, %u bytes\n",
 		  file, record, filebytes);
 	  tapebytes += filebytes;
 	  file++;

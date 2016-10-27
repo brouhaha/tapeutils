@@ -105,7 +105,7 @@ static struct mtop mt_setden={ MTSETDENSITY, 0x02 };  /* density = 1600 */
 
 
 /* do a write and check the return status, punt on error */
-static void dowrite (int handle, char *buf, int len)
+static void dowrite (int handle, void *buf, int len)
 {
   if (write (handle, buf, len) != len)
     {
@@ -116,7 +116,7 @@ static void dowrite (int handle, char *buf, int len)
 
 
 /* do a read and keep trying until we get all bytes */
-static void doread (int handle, char *buf, int len)
+static void doread (int handle, void *buf, int len)
 {
   int n;
   while(len)
@@ -408,7 +408,7 @@ void posneot (tape_handle_t mtape)
 
 
 /* read a tape record, return actual length (0=tape mark) */
-int getrec (tape_handle_t mtape, char *buf, int len)
+int getrec (tape_handle_t mtape, void *buf, int len)
 {
   unsigned char byte [4];		/* 32 bits for length field(s) */
   unsigned long l;		/* at least 32 bits */
@@ -465,7 +465,7 @@ int getrec (tape_handle_t mtape, char *buf, int len)
 
 
 /* write a tape record */
-void putrec (tape_handle_t mtape, char *buf, int len)
+void putrec (tape_handle_t mtape, void *buf, int len)
 {
   unsigned char l [4];
 

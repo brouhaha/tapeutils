@@ -25,6 +25,7 @@
 #include <utime.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 #define _REGEX_RE_COMP
 #include <regex.h>
@@ -98,18 +99,13 @@ extern char *re_comp();
 
 void punt (int prterrno, char *fmt, ...)
 {
-    extern int errno, sys_nerr;
     va_list ap;
 
     va_start (ap, fmt);
     vfprintf(stderr, fmt, ap);
     va_end (ap);
     if (prterrno) {
-	fprintf(stderr, ": ");
-	if (errno >= 0 && errno < sys_nerr)
-	    perror("");
-	else
-	    fprintf(stderr, "ERRNO = %d\n", errno);
+	fprintf(stderr, ": %s\n", strerror(errno));
     }
     else
 	fprintf(stderr, "\n");

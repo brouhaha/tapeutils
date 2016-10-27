@@ -37,10 +37,10 @@ void posnbot (tape_handle_t h);
 void posneot (tape_handle_t h);
 
 /* read a tape record, return actual length (0=tape mark) */
-int getrec (tape_handle_t h, char *buf, int len);
+int getrec (tape_handle_t h, void *buf, int len);
 
 /* write a tape record */
-void putrec (tape_handle_t h, char *buf, int len);
+void putrec (tape_handle_t h, void *buf, int len);
 
 /* write a tape mark */
 void tapemark (tape_handle_t h);
