@@ -71,6 +71,7 @@ struct mtape_t
   int tape_type;
   int tapefd;		/* tape drive, file, or socket file descriptor */
   int seek_ok;
+  int flags;
 
   unsigned long bpi;	/* tape density (for tape length msg) */
   int waccess;		/* NZ => tape opened for write access access */
@@ -423,7 +424,10 @@ int getrec (tape_handle_t mtape, void *buf, int len)
 	goto toolong;	/* don't read if too long for buf */
       if (l != 0)
 	{		/* get data unless tape mark */
+	  char x;
 	  doread (mtape->tapefd, buf, l);  /* read data */
+	  if ((l & 1) != 0 && (mtape->flags & TF_SIMH) != 0)
+	    doread (mtape->tapefd, &x, 1);
 	  doread (mtape->tapefd, byte, 4);  /* get trailing record length */
 	  if((((unsigned long)byte[3]<<24L)|
 	      ((unsigned long)byte[2]<<16L)|
@@ -647,3 +651,8 @@ void skipfile (tape_handle_t mtape, int count)
     }
 }
 
+/* set tape flags */
+void tapeflags (tape_handle_t mtape, int flags)
+{
+  mtape->flags = flags;
+}

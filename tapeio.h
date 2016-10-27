@@ -24,6 +24,11 @@
 typedef struct mtape_t *tape_handle_t;  /* opaque type */
 
 
+/* tape flags */
+#define TF_DEFAULT	0x000
+#define TF_SIMH		0x001
+
+
 /* open a tape drive */
 tape_handle_t opentape (char *name, int create, int writable);
 
@@ -51,3 +56,5 @@ void skiprec (tape_handle_t h, int count);
 /* skip files (negative for reverse) */
 void skipfile (tape_handle_t h, int count);
 
+/* set tape flags */
+void tapeflags (tape_handle_t h, int flags);

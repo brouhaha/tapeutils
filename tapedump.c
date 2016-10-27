@@ -288,6 +288,7 @@ int main (int argc, char *argv[])
   tape_handle_t src = NULL;
   uchar *buf;
   t_tape_type tape_type = generic;
+  int tape_flags = TF_DEFAULT;
 
   progname = argv [0];
 
@@ -302,6 +303,9 @@ int main (int argc, char *argv[])
 	    tape_type = hp_2000_mcp;
 	  else
 #endif /* HP_2000_SUPPORT */
+	  if (argv [0][1] == 's')
+	    tape_flags |= TF_SIMH;
+	  else
 	    fatal (1, "unrecognized option '%s'\n", argv [0]);
 	}
       else if (! srcfn)
@@ -320,6 +324,8 @@ int main (int argc, char *argv[])
   src = opentape (srcfn, 0, 0);
   if (! src)
     fatal (3, "can't open source tape\n");
+
+  tapeflags (src, tape_flags);
 
   for (;;)
     {
