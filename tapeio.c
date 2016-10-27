@@ -138,7 +138,7 @@ static void doread (int handle, char *buf, int len)
 
 
 /* get response from "rmt" server */
-static int response (tape_handle mtape)
+static int response (tape_handle_t mtape)
 {
   char c, rc;
   int n;
@@ -177,7 +177,7 @@ static int response (tape_handle mtape)
 
 
 /* send ioctl() command to local or remote tape drive */
-static int doioctl (tape_handle mtape, struct mtop *op)
+static int doioctl (tape_handle_t mtape, struct mtop *op)
 {
   int len;
 
@@ -195,15 +195,15 @@ static int doioctl (tape_handle mtape, struct mtop *op)
 
 /* open the tape drive (or whatever) */
 /* "create" =1 to create if file, "writable" =1 to open with write access */
-tape_handle opentape (char *name, int create, int writable)
+tape_handle_t opentape (char *name, int create, int writable)
 {
   char *p, *user, *port;
   int len;
   char *host = NULL;
 
-  tape_handle mtape = NULL;
+  tape_handle_t mtape = NULL;
 
-  mtape = (tape_handle) calloc (1, sizeof (struct mtape_t));
+  mtape = (tape_handle_t) calloc (1, sizeof (struct mtape_t));
   if (! mtape)
     FAIL ("?can't allocate mtape struct\n");
 
@@ -320,7 +320,7 @@ tape_handle opentape (char *name, int create, int writable)
 
 
 /* close the tape drive */
-void closetape (tape_handle mtape)
+void closetape (tape_handle_t mtape)
 {
   if (mtape->waccess) 
     {				/* opened for create/append */
@@ -346,7 +346,7 @@ void closetape (tape_handle mtape)
 
 
 /* rewind tape */
-void posnbot (tape_handle mtape)
+void posnbot (tape_handle_t mtape)
 {
   if (mtape->tape_type == TT_IMAGE)
     {		/* image file */
@@ -368,7 +368,7 @@ void posnbot (tape_handle mtape)
 
 
 /* position tape at EOT (between the two tape marks) */
-void posneot (tape_handle mtape)
+void posneot (tape_handle_t mtape)
 {
   if (mtape->tape_type == TT_IMAGE)
     {		/* image file */
@@ -408,7 +408,7 @@ void posneot (tape_handle mtape)
 
 
 /* read a tape record, return actual length (0=tape mark) */
-int getrec (tape_handle mtape, char *buf, int len)
+int getrec (tape_handle_t mtape, char *buf, int len)
 {
   unsigned char byte [4];		/* 32 bits for length field(s) */
   unsigned long l;		/* at least 32 bits */
@@ -465,7 +465,7 @@ int getrec (tape_handle mtape, char *buf, int len)
 
 
 /* write a tape record */
-void putrec (tape_handle mtape, char *buf, int len)
+void putrec (tape_handle_t mtape, char *buf, int len)
 {
   unsigned char l [4];
 
@@ -495,7 +495,7 @@ void putrec (tape_handle mtape, char *buf, int len)
 
 
 /* write a tape mark */
-void tapemark (tape_handle mtape)
+void tapemark (tape_handle_t mtape)
 {
   static char zero [4] = { 0, 0, 0, 0 };
 
@@ -516,7 +516,7 @@ void tapemark (tape_handle mtape)
 
 
 /* skip records (negative for reverse) */
-void skiprec (tape_handle mtape, int count)
+void skiprec (tape_handle_t mtape, int count)
 {
   unsigned char byte [4];		/* 32 bits for length field(s) */
   unsigned long l;		/* at least 32 bits */
@@ -566,7 +566,7 @@ void skiprec (tape_handle mtape, int count)
 
 /* skip forward to the next file mark, and leave the tape positioned
    after the mark */
-static void skip_to_mark (tape_handle mtape)
+static void skip_to_mark (tape_handle_t mtape)
 {
   unsigned char byte [4];		/* 32 bits for length field(s) */
   unsigned long l;		/* at least 32 bits */
@@ -627,7 +627,7 @@ static void skip_to_mark (tape_handle mtape)
 
 
 /* skip files (negative for reverse) */
-void skipfile (tape_handle mtape, int count)
+void skipfile (tape_handle_t mtape, int count)
 {
   if (mtape->tape_type != TT_IMAGE)
     {

@@ -26,9 +26,11 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include "tapeio.h"
 #include "stdio.h"
+#include "stdlib.h"
 #include "stdarg.h"
+
+#include "tapeio.h"
 
 #define MAX_REC_LEN 32768
 
@@ -71,8 +73,8 @@ int main (int argc, char *argv[])
   int verbose = 0;
   char *srcfn = NULL;
   char *destfn = NULL;
-  tape_handle src = NULL;
-  tape_handle dest = NULL;
+  tape_handle_t src = NULL;
+  tape_handle_t dest = NULL;
 
   progname = argv [0];
 

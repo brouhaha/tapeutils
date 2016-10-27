@@ -21,33 +21,33 @@
 */
 
 
-typedef struct mtape_t *tape_handle;  /* opaque type */
+typedef struct mtape_t *tape_handle_t;  /* opaque type */
 
 
 /* open a tape drive */
-tape_handle opentape (char *name, int create, int writable);
+tape_handle_t opentape (char *name, int create, int writable);
 
 /* close a tape drive */
-void closetape (tape_handle h);
+void closetape (tape_handle_t h);
 
 /* rewind tape */
-void posnbot (tape_handle h);
+void posnbot (tape_handle_t h);
 
 /* position tape at EOT (between the two tape marks) */
-void posneot (tape_handle h);
+void posneot (tape_handle_t h);
 
 /* read a tape record, return actual length (0=tape mark) */
-int getrec (tape_handle h, char *buf, int len);
+int getrec (tape_handle_t h, char *buf, int len);
 
 /* write a tape record */
-void putrec (tape_handle h, char *buf, int len);
+void putrec (tape_handle_t h, char *buf, int len);
 
 /* write a tape mark */
-void tapemark (tape_handle h);
+void tapemark (tape_handle_t h);
 
 /* skip records (negative for reverse) */
-void skiprec (tape_handle h, int count);
+void skiprec (tape_handle_t h, int count);
 
 /* skip files (negative for reverse) */
-void skipfile (tape_handle h, int count);
+void skipfile (tape_handle_t h, int count);
 

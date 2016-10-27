@@ -20,11 +20,11 @@
 # options
 # -----------------------------------------------------------------------------
 
-CFLAGS = -O2
-LDFLAGS = 
+# CFLAGS = -O2 -Wall
+# LDFLAGS = 
 
-# CFLAGS = -g
-# LDFLAGS = -g
+CFLAGS = -g -Wall
+LDFLAGS = -g
 
 # -----------------------------------------------------------------------------
 # You shouldn't have to change anything below this point, but if you do please
@@ -32,13 +32,13 @@ LDFLAGS =
 # -----------------------------------------------------------------------------
 
 PACKAGE = tapeutils
-VERSION = 0.4
+VERSION = 0.6
 DSTNAME = $(PACKAGE)-$(VERSION)
 
-PROGRAMS = tapecopy tapedump
+PROGRAMS = tapecopy tapedump t10backup read20
 
-HEADERS = tapeio.h
-SOURCES = tapeio.c tapecopy.c tapedump.c
+HEADERS = tapeio.h t10backup.h dumper.h
+SOURCES = tapeio.c tapecopy.c tapedump.c t10backup.c read20.c
 MISC = COPYING
 
 DISTFILES = $(MISC) Makefile $(HEADERS) $(SOURCES)
@@ -59,6 +59,10 @@ clean:
 tapecopy: tapecopy.o tapeio.o
 
 tapedump: tapedump.o tapeio.o
+
+t10backup: t10backup.o tapeio.o
+
+read20: read20.o tapeio.o
 
 
 include $(SOURCES:.c=.d)
