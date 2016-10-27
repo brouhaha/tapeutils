@@ -3,5 +3,6 @@
 *.d
 tapecopy
 tapedump
+taperead
 read20
 t10backup
