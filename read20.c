@@ -84,6 +84,23 @@ char *expression = 0;
 char *re_comp_error;     /* Error message from re_comp() */
 extern char *re_comp();
 
+#ifdef __APPLE__
+static regex_t re_regexp;
+
+char *re_comp(char *s)
+{
+  if (regcomp(&re_regexp, s, 0) == 0)
+    return NULL;
+  else
+    return "error";
+}
+
+static int re_exec(char *s)
+{
+  return regexec(&re_regexp, s, 0, 0, 0);
+}
+#endif
+
 /*
 	read20  [-f tapefile] [-t] [-c] [-T] [-n number] pattern
 
