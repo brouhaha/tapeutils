@@ -16,8 +16,7 @@
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
   08/10/93  JMBW  IBM mainframe TCP socket stuff (was using many files).
   07/08/94  JMBW  Local magtape code.
