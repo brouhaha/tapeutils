@@ -64,6 +64,10 @@
 struct mtop { int mt_op; int mt_count; };
 #else
 #include <sys/mtio.h>
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#define MTSETBLK MTSETBSIZ
+#define MTSETDENSITY MTSETDNSTY
+#endif
 #endif
 
 #include "tapeio.h"
@@ -424,6 +428,7 @@ int getrec (tape_handle_t mtape, void *buf, int len)
 {
   unsigned char byte [4];		/* 32 bits for length field(s) */
   unsigned long l;		/* at least 32 bits */
+  int i;
   
   if (mtape->tape_type == TT_IMAGE)
     {		/* image file */
@@ -454,21 +459,23 @@ int getrec (tape_handle_t mtape, void *buf, int len)
     {		/* rmt tape server */
       len = sprintf (mtape->netbuf, "R%d\n", len);
       dowrite (mtape->tapefd, mtape->netbuf, len);
-      if ((l = response (mtape)) < 0)
+      if ((i = response (mtape)) < 0)
 	{
 	  perror("?Error reading tape");
 	  exit(1);
 	}
+      l = i;
       if (l)
 	doread (mtape->tapefd, buf, l);
     }
   else 
     {				/* local tape drive */
-      if ((l = read (mtape->tapefd, buf, len)) < 0)
+      if ((i = read (mtape->tapefd, buf, len)) < 0)
 	{
 	  perror("?Error reading tape");
 	  exit(1);
 	}
+      l = i;
     }
   return(l);
 
