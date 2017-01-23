@@ -19,11 +19,17 @@
 # options
 # -----------------------------------------------------------------------------
 
+UNAME != uname
+
 # CFLAGS = -O2 -Wall
 # LDFLAGS = 
 
 CFLAGS = -g -Wall
 LDFLAGS = -g
+
+ifeq ($(UNAME),FreeBSD)
+	LIBS=-lcompat
+endif
 
 # -----------------------------------------------------------------------------
 # You shouldn't have to change anything below this point, but if you do please
@@ -55,19 +61,19 @@ clean:
 	rm -f $(PROGRAMS) $(MISC_TARGETS) *.o
 
 
-tapecopy: tapecopy.o tapeio.o
+tapecopy: tapecopy.o tapeio.o $(LIBS)
 
-tapedump: tapedump.o tapeio.o
+tapedump: tapedump.o tapeio.o $(LIBS)
 
-taperead: taperead.o tapeio.o
+taperead: taperead.o tapeio.o $(LIBS)
 
-tapewrite: tapewrite.o tapeio.o
+tapewrite: tapewrite.o tapeio.o $(LIBS)
 
-t10backup: t10backup.o tapeio.o
+t10backup: t10backup.o tapeio.o $(LIBS)
 
-read20: read20.o tapeio.o
+read20: read20.o tapeio.o $(LIBS)
 
-tapex: tapex.o tapeio.o
+tapex: tapex.o tapeio.o $(LIBS)
 
 
 include $(SOURCES:.c=.d)
