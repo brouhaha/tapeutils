@@ -40,10 +40,10 @@ PACKAGE = tapeutils
 VERSION = 0.6
 DSTNAME = $(PACKAGE)-$(VERSION)
 
-PROGRAMS = tapecopy tapedump taperead tapewrite t10backup read20 tapex
+PROGRAMS = tapecopy tapedump taperead tapewrite t10backup read20 tapex tapeconv
 
 HEADERS = tapeio.h t10backup.h dumper.h
-SOURCES = tapeio.c tapecopy.c tapedump.c taperead.c tapewrite.c t10backup.c read20.c tapex.c
+SOURCES = tapeio.c tapecopy.c tapedump.c taperead.c tapewrite.c t10backup.c read20.c tapex.c tapeconv.c
 MISC = COPYING
 
 DISTFILES = $(MISC) Makefile $(HEADERS) $(SOURCES)
@@ -74,6 +74,8 @@ t10backup: t10backup.o tapeio.o $(LIBS)
 read20: read20.o tapeio.o $(LIBS)
 
 tapex: tapex.o tapeio.o $(LIBS)
+
+tapeconv: tapeconv.o $(LIBS)
 
 
 include $(SOURCES:.c=.d)
