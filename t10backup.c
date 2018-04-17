@@ -216,6 +216,7 @@ void pars_5chars (long index, char *store)
   store [2] = (0177 & ((l << 3) | ((r >> 15) & 017)));
   store [3] = (0177 & (r >> 8));
   store [4] = (0177 & (r >> 1));
+  store [4] |= (r&1) << 7;
 }
 
 
