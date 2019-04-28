@@ -293,7 +293,7 @@ tape_handle_t opentape (char *name, int create, int writable)
 	  *p++ = '\0';	/* shoot out @, point at host name */
 	  user = (*p != '\0') ? host : NULL;  /* keep non-null user */
 	}
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(__OpenBSD__)
       if ((mtape->tapefd = rexec (&p, htons (512), user, NULL, "/etc/rmt",
 				  (int *) NULL)) < 0)
         FAIL ("?Connection failed\n");
