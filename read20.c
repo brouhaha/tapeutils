@@ -42,6 +42,7 @@ char tapeblocka[TAPEBLK];        /* One logical record from tape */
 FILE *fpFile;                   /* Output file handle on extracts */
 int debug = 0;
 int textflg = 0;                /* Non-zero if retr binary files as text */
+int binflg = 0;                 /* Non-zero if retr all files */
 int numflg = 0;                 /* Non-zero if using numeric filenames */
 int keepcr = 0;			/* Keep CR's in CRLF pairs in text files */
 int dodir = 0;				/* directory listing */
@@ -358,6 +359,29 @@ void getbytes (char *block,  /* Tape block */
 }
 
 
+/* getwords: like getstring, but ...
+   extracts 5 7-bit characters from a 36-bit word, and swizzles the
+   remaining 1 bit into the last output character.
+*/
+void getwords (char *block,  /* Tape block */
+	       char *s,      /* Destination string buffer */
+	       int wordoff,  /* 36-bit offset from start of tape block */
+	       int max)      /* Max number of characters to xfer into s */
+{
+	register int i;         /* Counter for five characters per word */
+	int ct = 0;             /* Number of words loaded so far */
+
+	while (ct < max)
+	{
+		for (i = 0; i < 5; i++)
+			*s++ = getfield(block, wordoff, i*7, 7);
+		s[-1] |= getfield(block, wordoff, 35, 1) << 7;
+		wordoff++;
+		ct++;
+	}
+}
+
+
 #define SecPerTick  (24.*60.*60.)/0777777
 #define DayBaseDelta 0117213            /* Unix day 0 in Tenex format */
 
@@ -446,6 +470,7 @@ void doDatablock (char *block)
 	switch (bytesize) {		/* only handle 7 and 8 bit bytes */
 	   case 7:      maxperblock = 512*5; break;
 	   case 8:      maxperblock = 512*4; break;
+	   case 36:     maxperblock = 512; break;
 	   default:     return;
 	}
 
@@ -454,7 +479,11 @@ void doDatablock (char *block)
 	else
 		ct = numbytes;
 
-	if (bytesize == 7) {
+	if (binflg) {
+		getwords(block, buf, 6, ct);
+		fwrite(buf, 5, ct, fpFile);
+	}
+	else if (bytesize == 7) {
 		nout = getstring(block, buf, 6, ct);
 		fwrite(buf, 1, nout, fpFile);
 	}
@@ -636,14 +665,20 @@ void doFileHeader (char *block)
 	}
 
 	if (xflg) {
+	    if (binflg) {
+		if (bytesize == 0)
+		    bytesize = 36;
+	        numbytes = (numbytes + (36/bytesize) - 1) / (36 / bytesize);
+	        bytesize = 36;
+	    }
 	    /* Special hack for bad files */
-	    if (textflg && bytesize != 7) {
+	    else if (textflg && bytesize != 7) {
 		if (bytesize == 0 || bytesize == 36) {
 		    bytesize = 7;
 		    numbytes *= 5;
 		}
 	    }
-	    if ((bytesize == 7 || bytesize == 8) && !offline) {
+	    if ((bytesize == 7 || bytesize == 8 || binflg) && !offline) {
 		if (pageno != 0) {	/* continued file */
 		    int missing = pageno * 512 * (bytesize == 7 ? 5 : 4);
 
@@ -732,6 +767,9 @@ int main (int argc, char *argv[])
 		case 'T':             /* Force text mode on "binary" files */
 			textflg = 1;
 			break;
+		case 'b':             /* Force extracting all files */
+			binflg = 1;
+			break;
 		case 't':             /* directory listing */
 			dodir = 1;
 			break;
@@ -793,6 +831,9 @@ int main (int argc, char *argv[])
 
 	if (!xflg && !dodir)
 		punt(0, "Need either '-x' or '-t' option.");
+
+	if (textflg && binflg)
+		punt(0, "'-T' and '-b' are mutually exclusive.");
 
 	if (argc > 1) {
 		patterns = &argv[1];
