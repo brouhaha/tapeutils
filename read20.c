@@ -51,6 +51,7 @@ int verbose = 0;
 int genflg;				/* keep generation number */
 int nselect;		/* number of files still to be selected by number */
 int doallflag;		/* act on all files cause no args given */
+int label;		/* there was a tape label */
 
 int number;                     /* Current output file "number" */
 
@@ -379,6 +380,22 @@ void getwords (char *block,  /* Tape block */
 		wordoff++;
 		ct++;
 	}
+}
+
+
+/*
+ * Unpack into buffer 's' the 8 bit string stored in 'block' and
+ * append a null char.
+ * Returns number of chars stored in output buffer.
+ */
+int getascii (char *block,  /* Tape block */
+	      char *s       /* Destination string buffer */,
+	      int off,      /* 8-bit offset from start of tape block */
+	      int max)      /* Max number of characters to xfer into s */
+{
+	memcpy (s, block + off, max);
+	s[max] = 0;
+	return max;
 }
 
 
@@ -732,6 +749,38 @@ void doTapeTrailer (char *block)
 }
 
 
+void doAnsiLabel (char *block)
+{
+	char string[80];
+
+	getascii (block, string, 0, 4);
+	if (debug > 10) printf("ANSI Label %s\n", string);
+
+	if (strncmp (block, "VOL1", 4) == 0) {
+		getascii (block, string, 4, 6);
+		printf ("ANSI Volume Identifier: %s\n", string);
+	} else if (strncmp (block, "HDR1", 4) == 0) {
+		if (verbose) {
+			getascii (block, string, 4, 17);
+			printf ("ANSI File Indentifier: %s\n", string);
+			getascii (block, string, 21, 6);
+			printf ("File Set: %s\n", string);
+			getascii (block, string, 27, 4);
+			printf ("File Section: %s\n", string);
+		}
+	} else if (strncmp (block, "HDR2", 4) == 0) {
+		if (verbose) {
+			getascii (block, string, 4, 1);
+			printf ("Record Format: %s\n", string);
+			getascii (block, string, 5, 5);
+			printf ("Block Length: %s\n", string);
+			getascii (block, string, 10, 5);
+			printf ("Record Length: %s\n", string);
+		}
+	}
+}
+
+
 int compwant(const void *wa1, const void *wa2)
 {
   const struct want *w1 = wa1;
@@ -847,6 +896,7 @@ int main (int argc, char *argv[])
 	if (! tape_handle)
 		punt(1, "Can't open tape '%s'", tape);
 
+	label = 0;
 	rc = 0;
 	for ( ; ; )             /* Loop till end of tape */
 	{
@@ -856,10 +906,20 @@ int main (int argc, char *argv[])
 			if (debug > 99)
 				printf("rc=%d\n", rc);
 			if ((rc % (518*5)) != 0) {
+				if (rc == 80) {
+					doAnsiLabel(tapeblocka);
+					label = 1;
+					rc = 0;
+					continue;
+				}
 				if (rc != 0)
 				punt(1, "Oops.  Read block len = %d", rc);
 			}
 			if (rc == 0) {
+				if (label) {
+					label = 0;
+					continue;
+				}
 				if (verbose)
 					printf("\nEnd of tape.\n");
 				exit(0);        /* Normal exit */
