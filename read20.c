@@ -442,7 +442,7 @@ char *unixname (char *name)
 	}
 
 	strcpy(sunixname, index(name, '<') + 1); /* trim off device */
-	t = rindex(sunixname, '>');        	 /* find end of directory */
+	t = index(sunixname, '>');        	 /* find end of directory */
 	*t = '.';
 
 	if (strncmp(lastdir, sunixname, t - sunixname)) {/* maybe new dir */
@@ -466,6 +466,14 @@ char *unixname (char *name)
 	if (!genflg) {
 		t = rindex(sunixname, '.');	/* find last . */
 		*t = 0;				/* zap it out */
+	}
+	for (;;) {
+	  t = index(sunixname, '\026');
+	  if (t == NULL)
+	    break;
+	  memmove(t, t+1, strlen (t+1));
+	  if (*t == '/')
+	    *t = '|';
 	}
 	return(sunixname);
 }
@@ -648,6 +656,7 @@ void doFileHeader (char *block)
     static char prt_ar[2] = {'-', 'A'};
     static char prt_inv[2] = {'-', 'I'};
     static char prt_off[2] = {'-', 'O'};
+    int prot;
 
     if (debug > 5)
 	printf("File Header block:\n");
@@ -706,12 +715,15 @@ void doFileHeader (char *block)
 		    if (!(dodir || verbose))
 			putchar('\n');
 		}
+		printf("[%s,%s]\n", topsname, sunixname);
 		fpFile = fopen(unixname(topsname), "w");
 		if (fpFile == NULL)
 		    punt(1, "Can't open %s for write", sunixname);
 		else if (verbose)
 		    printf(" Extracted.");
-		if (fchmod(fileno(fpFile), t2uprot(tprot) & ~0111) < 0)
+		prot = t2uprot(tprot) & ~0111;
+		prot |= 0600;
+		if (fchmod(fileno(fpFile), prot) < 0)
 		    punt(1, "fchmod on %s", sunixname);
 	    } else if (verbose)
 		printf(" Skipping -- %s file.",
