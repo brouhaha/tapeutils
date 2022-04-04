@@ -86,7 +86,7 @@ char *expression = 0;
 char *re_comp_error;     /* Error message from re_comp() */
 extern char *re_comp();
 
-#if defined(__APPLE__) || defined(__OpenBSD__)
+#if defined(__APPLE__) || defined(__OpenBSD__) || defined(__CYGWIN__)
 static regex_t re_regexp;
 
 char *re_comp(char *s)
