@@ -496,17 +496,18 @@ void doDatablock (char *block)
 	else
 		ct = numbytes;
 
-	if (binflg) {
-		getwords(block, buf, 6, ct);
-		fwrite(buf, 5, ct, fpFile);
-	}
-	else if (bytesize == 7) {
+	if (bytesize == 7) {
 		nout = getstring(block, buf, 6, ct);
 		fwrite(buf, 1, nout, fpFile);
 	}
-	else {          /* if not 7, then 8bit */
+	else if (bytesize == 8) {          /* if not 7, then 8bit */
 		getbytes(block, buf, 6, ct);
 		fwrite(buf, 1, ct, fpFile);
+	}
+	else if (binflg) {
+	        /* Only treat it as binary if it isn't 7 or 8-bit bytes */
+		getwords(block, buf, 6, ct);
+		fwrite(buf, 5, ct, fpFile);
 	}
 	if (ferror(fpFile))
 		punt(1, "Error writing %s", sunixname);
@@ -682,7 +683,8 @@ void doFileHeader (char *block)
 	}
 
 	if (xflg) {
-	    if (binflg) {
+	    if (binflg && bytesize != 7 && bytesize != 8) {
+	        /* Hack bytesize of binary files only if they aren't 7 or 8-bit */
 		if (bytesize == 0)
 		    bytesize = 36;
 	        numbytes = (numbytes + (36/bytesize) - 1) / (36 / bytesize);
