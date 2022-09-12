@@ -59,6 +59,7 @@ int number;                     /* Current output file "number" */
 
 int  bytesize;          /* Number of bits/byte in current file */
 long  numbytes;          /* Number of bytes in current file */
+long  truncate_length = 0;  /* For -b, truncate output to this. */
 int  pgcount;           /* Number of twenex pages in file */
 long pageno, tapeno, ssno, filenum;
 
@@ -642,6 +643,16 @@ int t2uprot (unsigned int prot)
 }
 
 
+/* Compute the number of 8-bit host bytes needed to store a PDP-10
+   file, using the swizzled format with five octets per 36 bits. */
+static long host_octets (long file_bytes, int byte_size)
+{
+    int bytes_per_word = 36 / byte_size;
+    long words = file_bytes / bytes_per_word;
+    int remaining_bytes = file_bytes % bytes_per_word;
+    return 5 * words + (remaining_bytes * byte_size + 6) / 7;
+}
+
 void doFileHeader (char *block)
 {
     char *ts;
@@ -685,6 +696,7 @@ void doFileHeader (char *block)
 	    if (binflg) {
 		if (bytesize == 0)
 		    bytesize = 36;
+		truncate_length = host_octets (numbytes, bytesize);
 	        numbytes = (numbytes + (36/bytesize) - 1) / (36 / bytesize);
 	        bytesize = 36;
 	    }
@@ -731,6 +743,10 @@ void doFileTrailer (char *block)
 	if (fpFile != NULL) {
 		if (pendstring() == '\r')
 			putc('\r', fpFile);
+		if (truncate_length) {
+		    fflush (fpFile);
+		    ftruncate (fileno (fpFile), truncate_length);
+		}
 		if (fclose(fpFile) == EOF)
 			punt(1, "fclose: write error on %s", sunixname);
 		fpFile = NULL;
