@@ -86,7 +86,7 @@ char *rectypes[] = {
 #define WdoffSSDate        8            /* Saveset date offset (type 1, 6) */
 #define WdoffSSName        9            /* Saveset name offset (type 1, 6) */
 #define WdoffFLName        6            /* Filename offset (type 2) */
-#define WdoffSSMsg	  020		/* Saveset name (unless SSPtr set) */
+#define WdoffSSMsg	  (020+WdoffSSstart) /* Saveset name (unless SSPtr set) */
 #define WdoffFDB         134            /* FDB offset (type 2) */
 
 #define WdoffFDB_CTL	01+WdoffFDB	/* Control word .FBCTL */
