@@ -80,9 +80,13 @@ char *rectypes[] = {
 #define BtoffWord       0
 #define BtlenWord       36
 
+#define WdoffSSstart	6	/* Start of saveset data */
+#define WdoffSSFmt	   6	/* Format of tape */
+#define WdoffSSPtr	   7	/* Pointer to saveset name (or 3 or 020 depending on format) */
 #define WdoffSSDate        8            /* Saveset date offset (type 1, 6) */
 #define WdoffSSName        9            /* Saveset name offset (type 1, 6) */
 #define WdoffFLName        6            /* Filename offset (type 2) */
+#define WdoffSSMsg	  (020+WdoffSSstart) /* Saveset name (unless SSPtr set) */
 #define WdoffFDB         134            /* FDB offset (type 2) */
 
 #define WdoffFDB_CTL	01+WdoffFDB	/* Control word .FBCTL */

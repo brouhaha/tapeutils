@@ -519,13 +519,32 @@ void doSaveset (char *block, int contflag)
 {
 	static char name[102];
 	static char ss[2];
+	long ssfmt, ssptr;
 	long t;
 
 	if (debug > 10) printf("\nSaveset header:");
 	tapeno = getfield(block, WdoffTapeNum, BtoffTapeNum, BtlenTapeNum);
 	ssno = getfield(block, WdoffSaveSetNum, BtoffSaveSetNum,
 	    BtlenSaveSetNum);
-	getstring(block, name, WdoffSSName, sizeof(name));
+	ssfmt = getfield(block, WdoffSSFmt, BtoffWord, BtlenWord); /* Get format */
+	ssptr = getfield(block, WdoffSSPtr, BtoffWord, BtlenWord); /* Get pointer */
+	// Check tape format! Otherwise breaks e.g. on Install tapes (which aren't in dumper format).
+	if ((ssfmt < 4) || (ssfmt > 6)) {
+	  // Formats older than 4 not supported, and 6 was the highest (TOPS-20 v6-7).
+	  // If you want to support older fmts, write the code. :-)
+	  fprintf (stderr, "Bad dumper tape format %012lo\n", ssfmt);
+	  exit(1);
+	}
+
+	if (verbose) {
+	  printf("Saveset format %ld, name pointer %ld; tape %ld, saveset %ld\n", ssfmt, ssptr, tapeno, ssno);
+	}
+	if (ssptr == 0) {
+	  /* If there is no pointer, use default offset: for format 5-6 (T20 v6-7), SS.MSG, otherwise (T20 v4-5) BFMSG */
+	  getstring(block, name, ssfmt > 4 ? WdoffSSMsg : WdoffSSName, sizeof(name));
+	} else {
+	  getstring(block, name, ssptr+WdoffSSstart, sizeof(name));
+	}
 	ss[0] = pendstring();		/* superfluous */
 	(void) strcat(name, ss);
 	
