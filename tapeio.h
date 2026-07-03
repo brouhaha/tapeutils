@@ -27,6 +27,10 @@ typedef struct mtape_t *tape_handle_t;  /* opaque type */
 #define TF_DEFAULT	0x000
 #define TF_SIMH		0x001
 
+/* SIMH tape image */
+#define SIMH_RECORD_ERR  0x80000000
+#define SIMH_RECORD_EOM  0xFFFFFFFF
+
 
 /* open a tape drive */
 tape_handle_t opentape (char *name, int create, int writable);

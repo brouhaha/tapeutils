@@ -147,6 +147,11 @@ int main (int argc, char *argv[])
 	    putrec (dest, buf, len);
 	  lencount++;
 	}
+      else if (len & 0x80000000)
+	{
+	  /* error or end of medium */
+	  break;
+	}
       else
 	{
 	  tapebytes += filebytes;
@@ -160,8 +165,6 @@ int main (int argc, char *argv[])
 	    }
 	  if (destfn)
 	    tapemark (dest);
-	  if (prevlen == 0)
-	    break;
 	  file++;
 	  lencount = 0;
 	  firstrec = 0;

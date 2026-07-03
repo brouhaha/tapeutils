@@ -438,7 +438,11 @@ int getrec (tape_handle_t mtape, void *buf, int len)
       /* compose into longword */
       if (l > len)
 	goto toolong;	/* don't read if too long for buf */
-      if (l != 0)
+      if (l & SIMH_RECORD_ERR)
+	{
+	  ;
+	}
+      else if (l != 0)
 	{		/* get data unless tape mark */
 	  char x;
 	  doread (mtape->tapefd, buf, l);  /* read data */
@@ -472,10 +476,17 @@ int getrec (tape_handle_t mtape, void *buf, int len)
     {				/* local tape drive */
       if ((i = read (mtape->tapefd, buf, len)) < 0)
 	{
-	  perror("?Error reading tape");
-	  exit(1);
+	  struct mtget status;
+	  int rv;
+	  l = 0x80000000 | errno;
+	  if ((ioctl (mtape->tapefd, MTIOCGET, &status) != -1)
+	      && GMT_EOT(status.mt_gstat))
+	    l = 0xFFFFFFFF; /* physical end of medium */
 	}
-      l = i;
+      else
+	{
+	  l = i;
+	}
     }
   return(l);
 
