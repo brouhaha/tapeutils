@@ -429,11 +429,7 @@ long unixtime(char *block, int wordoff)
 char *unixname (char *name)
 {
 	static FILE *log = NULL;
-	register char *t, *p;
-	static char lastdir[64];
-	struct stat stb;
-	int mask;
-	register int newdir = 0;
+	char *t;
 
 	if (numflg) {             /* If numeric filenames */
 		if (log == NULL) log = fopen(LOGFILE, "a");
@@ -442,28 +438,61 @@ char *unixname (char *name)
 		return(sunixname);
 	}
 
-	strcpy(sunixname, index(name, '<') + 1); /* trim off device */
-	t = rindex(sunixname, '>');        	 /* find end of directory */
-	*t = '.';
+	/* Copy/replace as we go, handling ^V and / in filenames.
+	   Directories are made in make_parent_dir at time of write.
+	 */
+	char *i, *o = sunixname;	/* Where to write */
+	char *dirend = index(name, '>'); /* find end of directory name */
+	memset(sunixname, 0, sizeof(sunixname));
 
-	if (strncmp(lastdir, sunixname, t - sunixname)) {/* maybe new dir */
-	    strncpy(lastdir, sunixname, t - sunixname);	/* remember it */
-	    newdir = 1;
+	/* Copy directory name part, replacing '.' with '/'. */
+	/* Start after the device and directory start delimiter */
+	for (i = index(name, '<')+1; i < dirend; i++) {
+	  if (*i == '.') *o++ = '/'; /* Replace directory name separators */
+	  else *o++ = *i;
 	}
-	for (p = sunixname; p <= t; p++)
-	    if (*p == '.') {
-		if (newdir) {
-		    *p = '\0';			/* temporarily null it off */
-		    if (stat(sunixname, &stb) < 0) {
-			mask = umask(2);
-			if (mkdir(sunixname, 0777) < 0)
-			    punt(1, "mkdir %s failed", sunixname);
-			umask(mask);
-		    }
-		}
-		*p = '/';
-	    }
+	*o++ = '/';		/* zap end of directory */
+	i++;
 	
+	/* Now deal with the file name */
+	int changed = 0;
+
+	for (; *i != '\0'; i++) {
+	  if (*i == 22) {		/* Control-V is the quote char in T20 */
+	    /* Not all that need quoting in T20 need quoting in *nix. */
+	    char *next = i+1;
+	    if (*next == '/') { /* Slash is illegal in *nix file names */
+	      *o++ = ':';	/* handle by rewriting */
+	      i++;		/* skip the input slash */
+	      changed++;
+	      if (debug) printf(" changing quoted / at %s\n", i);
+	    } else if ((*next == '.') || (*next == '\\')) {
+	      /* Quote . and \\ to preserve T20 name/type syntax in a predictable way */
+	      *o++ = '\\';		/* make it unix quote char */
+	      changed++;
+	      if (debug) printf(" quoting ^V at %s\n", i);
+	    } else {
+	      /* No need to quote others in *nix pathnames, it turns out */
+	      *o++ = *next;
+	      i++;
+	      changed++;
+	      if (debug) printf(" unquoting ^V at %s\n", i);
+	    }
+	  }
+	  else if (*i == '/') {	/* Slash is illegal in file names */
+	    /* @@@@ This case must be covered above, since / must be quoted in T20 filenames */
+	    punt(0,"Unexpected slash in pathname: '%s'", i);
+	    *o++ = ':';		/* so replace with : (tradition from old) */
+	    changed++;
+	    if (debug) printf(" changing unquoted / at %s\n", i);
+	  }
+	  else
+	    *o++ = *i;
+	}
+	if (debug && (changed > 0))
+	  printf(" %d modifications, now '%s'\n", changed, sunixname);
+
+	/* If not using generations, remove it. */
 	if (!genflg) {
 		t = rindex(sunixname, '.');	/* find last . */
 		*t = 0;				/* zap it out */
@@ -672,6 +701,34 @@ static long host_octets (long file_bytes, int byte_size)
     return 5 * words + (remaining_bytes * byte_size + 6) / 7;
 }
 
+// Opening fname for write gave "No such file or directory", indicating the directory doesn't exist.
+// Make sure sufficiently many parent directories exist.
+int make_parent_dir(char *fname) {
+  int val = 0;
+  char *slash = rindex(fname,'/');
+  if (slash != NULL) {
+    if (debug) printf(" Trying to make parent directory of '%s'\n", fname);
+    char *dname = strdup(fname);
+    slash = rindex(dname,'/');
+    *slash = '\0';		/* Note: must be there */
+    if (debug) printf(" Attempting to make directory '%s'\n", dname);
+    if (mkdir(dname,0777) < 0) {
+      if (debug) printf(" Failed to make directory '%s', recursing\n", dname);
+      val = make_parent_dir(dname);
+      if (val == 0) {
+	if (mkdir(dname,0777) < 0) {
+	  // punt(1,"Made parent but failed with child %s",dname);
+	  val = -1;
+	} else if (debug) printf(" Made missing directory '%s'\n", dname);
+      }
+    } else if (debug) printf(" Made missing directory '%s'\n", dname);
+    *slash = '/';		/* Put back the slash */
+    free(dname);		/* Free the copy */
+    return val;
+  } else
+    return -1;			/* No slash, just plain failure? */
+}
+
 void doFileHeader (char *block)
 {
     char *ts;
@@ -738,11 +795,23 @@ void doFileHeader (char *block)
 			putchar('\n');
 		}
 		fpFile = fopen(unixname(topsname), "w");
-		if (fpFile == NULL)
+		if (fpFile == NULL) {
+		  if (errno == ENOENT) {
+		    /* No such file or directory: Try to fix the error. */
+		    if (make_parent_dir(sunixname) < 0)
+		      punt(1, "Couldn't make parent directory of %s", sunixname);
+		    fpFile = fopen(sunixname,"w");
+		    if (fpFile == NULL) 
+		      punt(1, "Can't open %s for write", sunixname);
+		  } else
 		    punt(1, "Can't open %s for write", sunixname);
+		}
 		else if (verbose)
 		    printf(" Extracted.");
-		if (fchmod(fileno(fpFile), t2uprot(tprot) & ~0111) < 0)
+		/* Make sure we can write the file, it's hard to restore it otherwise */
+		/* @@@@ Should set the permission after restoring the file, not (only) now! */
+		/* T20 execute bits would be meaningless in *nix, mask them off. */
+		if (fchmod(fileno(fpFile), (t2uprot(tprot) & ~0111) | 0200) < 0)
 		    punt(1, "fchmod on %s", sunixname);
 	    } else if (verbose)
 		printf(" Skipping -- %s file.",
