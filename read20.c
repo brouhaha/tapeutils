@@ -85,7 +85,7 @@ char **patterns = 0;     /* Filename match patterns */
 int numpats = 0;         /* Number of patterns */
 char *expression = 0;
 char *re_comp_error;     /* Error message from re_comp() */
-extern char *re_comp();
+extern char *re_comp(char *s);
 
 #if defined(__APPLE__) || defined(__OpenBSD__) || defined(__CYGWIN__)
 static regex_t re_regexp;
@@ -519,7 +519,7 @@ void doSaveset (char *block, int contflag)
 {
 	static char name[102];
 	static char ss[2];
-	long ssfmt, ssptr;
+	long ssfmt, ssptr, ssedt;
 	long t;
 
 	if (debug > 10) printf("\nSaveset header:");
@@ -528,6 +528,7 @@ void doSaveset (char *block, int contflag)
 	    BtlenSaveSetNum);
 	ssfmt = getfield(block, WdoffSSFmt, BtoffWord, BtlenWord); /* Get format */
 	ssptr = getfield(block, WdoffSSPtr, BtoffWord, BtlenWord); /* Get pointer */
+	ssedt = getfield(block, WdoffSSEdit, BtoffWord, BtlenWord); /* Get dumper version */
 	// Check tape format! Otherwise breaks e.g. on Install tapes (which aren't in dumper format).
 	if ((ssfmt < 4) || (ssfmt > 6)) {
 	  // Formats older than 4 not supported, and 6 was the highest (TOPS-20 v6-7).
@@ -537,7 +538,10 @@ void doSaveset (char *block, int contflag)
 	}
 
 	if (verbose) {
-	  printf("Saveset format %ld, name pointer %ld; tape %ld, saveset %ld\n", ssfmt, ssptr, tapeno, ssno);
+	  if (ssfmt > 5)	/* has Dumper version */
+	    printf("Saveset format %ld, name pointer %ld, dumper version %ld; tape %ld, saveset %ld\n", ssfmt, ssptr, ssedt, tapeno, ssno);
+	  else
+	    printf("Saveset format %ld, name pointer %ld; tape %ld, saveset %ld\n", ssfmt, ssptr, tapeno, ssno);
 	}
 	if (ssptr == 0) {
 	  /* If there is no pointer, use default offset: for format 5-6 (T20 v6-7), SS.MSG, otherwise (T20 v4-5) BFMSG */
